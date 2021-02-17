@@ -6,18 +6,6 @@ import (
 	"net/http"
 )
 
-type Route struct {
-	Path    string
-	Method  string
-	Handler func(*State)
-}
-
-type J map[string]interface{}
-
-func createRoute(path, method string, handler func(*State)) Route {
-	return Route{path, method, handler}
-}
-
 type router struct {
 	Routes map[string]map[string]Route
 }

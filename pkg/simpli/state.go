@@ -9,6 +9,8 @@ type State struct {
 	json           interface{}
 }
 
+type J map[string]interface{}
+
 func newState(r *http.Request, rw http.ResponseWriter) *State {
 	return &State{
 		Request:        r,
