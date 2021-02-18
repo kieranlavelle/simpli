@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"regexp"
+	"strings"
 )
 
 type router struct {
@@ -34,9 +34,22 @@ func (r *router) matchRoute(path, method string) (Route, bool) {
 	for existingPath, existingMethods := range r.Routes {
 		for existingMethod, route := range existingMethods {
 			if route.regexMatch && existingMethod == method {
-				regexPath := route.getRegexPath()
-				match, _ := regexp.MatchString(regexPath, path)
-				if match {
+				if route.regexPattern.MatchString(path) {
+					names := route.regexPattern.SubexpNames()
+					pathParts := strings.Split(path, "/")
+
+					for index, group := range names {
+						if group == "" {
+							continue
+						}
+
+						if index == len(names)-1 {
+							finalPart := strings.Join(pathParts[index:], "/")
+							route.pathParams[group] = finalPart
+						} else {
+							route.pathParams[group] = pathParts[index]
+						}
+					}
 					return route, true
 				}
 			} else if existingPath == path && existingMethod == method {
@@ -79,12 +92,12 @@ func (router *router) Run(address string) {
 
 		route, exists := router.matchRoute(r.URL.Path, r.Method)
 		if exists {
-			state := newState(r, rw)
-			route.Handler(state)
+			s := newState(r, rw, route.pathParams)
+			route.Handler(s)
 
-			rw.WriteHeader(state.status)
-			if state.json != nil {
-				json.NewEncoder(rw).Encode(state.json)
+			rw.WriteHeader(s.status)
+			if s.json != nil {
+				json.NewEncoder(rw).Encode(s.json)
 			}
 
 			return
@@ -92,23 +105,6 @@ func (router *router) Run(address string) {
 
 		rw.WriteHeader(404)
 		return
-		// methods, ok := router.Routes[r.URL.Path]
-		// if ok {
-		// 	route, ok := methods[r.Method]
-		// 	if ok {
-		// 		state := newState(r, rw)
-		// 		route.Handler(state)
-
-		// 		rw.WriteHeader(state.status)
-		// 		if state.json != nil {
-		// 			json.NewEncoder(rw).Encode(state.json)
-		// 		}
-
-		// 		return
-		// 	}
-		// }
-		// rw.WriteHeader(404)
-		// return
 	})
 
 	http.ListenAndServe(address, nil)

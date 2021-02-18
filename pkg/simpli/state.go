@@ -4,6 +4,7 @@ import "net/http"
 
 type State struct {
 	Request        *http.Request
+	Params         map[string]string
 	responseWriter http.ResponseWriter
 	status         int
 	json           interface{}
@@ -11,13 +12,18 @@ type State struct {
 
 type J map[string]interface{}
 
-func newState(r *http.Request, rw http.ResponseWriter) *State {
+func newState(r *http.Request, rw http.ResponseWriter, params map[string]string) *State {
 	return &State{
 		Request:        r,
+		Params:         params,
 		responseWriter: rw,
 		status:         200,
 		json:           nil,
 	}
+}
+
+func (s *State) Param(key string) string {
+	return s.Params[key]
 }
 
 func (s *State) SetHeader(key, value string) {

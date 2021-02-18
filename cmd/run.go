@@ -17,7 +17,10 @@ func test(s *simpli.State) {
 
 func wildcardHandler(s *simpli.State) {
 
-	log.Printf("Hello from: %v", s.Request.URL.Path)
+	application := s.Param("application")
+	path := s.Param("path")
+
+	log.Printf("Hello from application: %v, serving path: %v", application, path)
 
 	s.JSONResponse(http.StatusOK, simpli.J{
 		"detail": "wildcards working",
@@ -28,7 +31,7 @@ func main() {
 
 	r := simpli.New()
 
-	r.GET("/:application/:path", wildcardHandler)
+	r.GET("/:application/*path", wildcardHandler)
 	r.GET("/test", test)
 	r.Run("0.0.0.0:10000")
 }
